@@ -1,12 +1,12 @@
 // --------------------------------------------------------------------
 //
 // ==UserScript==
-// @name          Jjwxc_Search_Summary 
-// @namespace     http://abbypan.blogspot.com/
-// @description   绿晋江(http://www.jjwxc.net)搜索结果添加积分信息
+// @name          jjwxc-search-summary 
+// @namespace     http://abbypan.github.com/
+// @description   绿晋江( http://www.jjwxc.net )搜索结果添加积分信息
 // @author        Abby Pan (abbypan@gmail.com)
-// @homepage      http://abbypan.blogspot.com/
-// @copyright     2009+, Abby Pan (http://abbypan.blogspot.com/)
+// @homepage      http://abbypan.github.com/
+// @copyright     2009+, Abby Pan (http://abbypan.github.com/)
 // @version       0.2
 // @require		  http://userscripts.org/scripts/source/44063.user.js
 // @include       http://www.jjwxc.net/search.php?kw=*
@@ -31,7 +31,6 @@ var LjjSearch = new Class({
 							  banner.adopt(bookID);
 							  banner.appendText(' 本，共 ');
 
-							  //var search = document.getElement('div[id="search_result"]');
 							  var books=$('search_result').getElements('h3[class="title"]');        
 							  var num = books.length;
 
