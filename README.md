@@ -1,9 +1,9 @@
 jjwxc_search_summary
 ====================
 
-greasemonkey : 绿晋江http://www.jjwxc.net 搜索结果添加积分信息
+安装：http://userscripts.org/scripts/show/109674
 
-具体见：http://userscripts.org/scripts/show/109674
+功能 : 绿晋江http://www.jjwxc.net 搜索结果添加积分信息
 
-截图
+查询效果
 ![query](query.png)
