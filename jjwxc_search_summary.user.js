@@ -1,119 +1,71 @@
 // --------------------------------------------------------------------
 //
 // ==UserScript==
-// @name          jjwxc-search-summary 
-// @namespace     http://abbypan.github.com/
-// @description   绿晋江( http://www.jjwxc.net )搜索结果添加积分信息
-// @author        Abby Pan (abbypan@gmail.com)
-// @homepage      http://abbypan.github.com/
-// @copyright     2009+, Abby Pan (http://abbypan.github.com/)
-// @version       0.3
-// @require		  http://userscripts.org/scripts/source/44063.user.js
-// @include       http://www.jjwxc.net/search.php?kw=*
+// @name jjwxc-search-summary
+// @namespace http://abbypan.github.com/
+// @description 绿晋江( http://www.jjwxc.net )搜索结果添加积分信息
+// @author Abby Pan (abbypan@gmail.com)
+// @homepage http://abbypan.github.com/
+// @copyright 2009+, Abby Pan (http://abbypan.github.com/)
+// @version 0.4
+// @include http://www.jjwxc.net/search.php?kw=*
+// @grant         GM_xmlhttpRequest
+// @require http://libs.baidu.com/jquery/2.0.0/jquery.min.js
 // ==/UserScript==
 //
 // --------------------------------------------------------------------
+var url=document.location.href;
+var charset=document.characterSet;
 
-var LjjSearch = new Class({
-    initialize: function(){
-                    this.url=document.location.href;
-                    this.charset=document.characterSet;
-                },
-    mainSearchSummary : function(){
-                            var books=$('search_result').getElements('h3[class="title"]');        
-                            var num = books.length;
-                            if(num<=0) return;
+function mainSearchSummary(){
+    var num = $('#search_result').find('h3[class="title"]').length;
+    if(num<=0) return;
 
-                            var banner = new Element('p', {id: 'refineInfo'});
-                            banner.set('style','color:red');
-                            banner.set('html','正在取第<span id="bookID">0</span>本，共<span id="bookNum">'+num+'</span>本');
-                            banner.inject($('search_result'),'before');
+    var s = '<p id="refineInfo" style="color:red">正在取第<span id="bookID">0</span>本，共<span id="bookNum">'+
+            num+'</span>本</p>';
+    $(s).insertBefore('#search_result');
 
-                            this.addBookSummary(books);
-                        },
-    addBookSummary: function(books){
-                        var thisBook = this.getIterBook(books);
-                        if(!thisBook) return;
+    var i = 0;
+    $('#search_result').find('h3[class="title"]').each(function(){
+        var u=$(this).find('a').attr('href');
+        var h = $(this);
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: u,
+            'overrideMimeType':"text/html; charset="+charset,
+            onload: function(res) {
+                var page = res.responseText;
+                var wordNum = getWordNum(page);
+                var Point = getPoint(page);
+                var pointPerWord = calcAvgPoint(wordNum, Point);
+                var info = '<font style="color:red">[ 字数: '+wordNum+' | 积分: '+Point+' | 积分/字: '+pointPerWord+' ]</font>';
+                h.append(info);
+                i++;
+                $('#bookID').html(i);
+            }
+        });
 
-                        var url=thisBook.getElement('a').get('href');
-                        var self=this;
-                        GM_xmlhttpRequest({
-                            method: "GET",
-                            url: url,
-                            'overrideMimeType':"text/html; charset="+self.charset,
-                            onload: function(res) {
-                                var page = new Element('div');
-                                page.innerHTML = res.responseText;
+    });
+}
 
-                                var wordNum = self.getWordNum(page);
-                                var Point = self.getPoint(page);
-                                self.addBookSummaryElement(thisBook,wordNum,Point);
-
-                                self.addBookSummary(books);
-                            },
-                            onerror : function(res){
-                                          self.addBookSummary(books);
-                                      },
-                        });
-                    },
-    getIterBook : function (books){
-                      var bookID= extractNumInt($('bookID')) + 1;
-                      var bookNum = extractNumInt($('bookNum'));
-                      if(bookID > bookNum){
-                          $('refineInfo').parentNode.removeChild($('refineInfo'));
-                          return;
-                      }
-
-                      $('bookID').set('text',bookID);
-                      var bookIter =books[bookID-1];
-
-                      return bookIter;
-                  }, 
-    getWordNum : function(page){
-                     var lis = page.getElement('ul[name="printright"]').getElements('li');
-                     return extractNum(lis[4]);
-                 },
-    getPoint : function(page){
-                   var div = page.getElement('div[style="padding-top: 50px;"]');
-                   if(!div){
-                       div = (page.getElements('td[class="sptd"]'))[1];
-                   }
-                   return extractNum(div);
-               },
-    addBookSummaryElement : function(thisBook,wordNum,Point){
-                                var pointPerWord = calcAvgPoint(wordNum, Point);
-
-                                var info = new Element('font');
-                                info.set('color','red');
-                                info.set('text',' [ 字数: '+wordNum+' | 积分: '+Point+' | 积分/字: '+pointPerWord+' ]');
-
-                                thisBook.adopt(info);
-                            },
-});
+function getWordNum(page){
+    var m = page.match(/itemprop="wordCount">([0-9,]+)字<\/span>/);
+    return m ? extractNum(m[1]) : 0;
+}
+function getPoint (page){
+    var m = page.match(/作品积分：([0-9,]+)" \/>/);
+    return m ? extractNum(m[1]) : 0;
+}
 
 function calcAvgPoint ( wordNum , point ) {
-    if(wordNum == 0 )
-        return "0";
-    var newPoint = (point/wordNum+0.5) + ""; 
+    if(wordNum == 0 ) return "0";
+    var newPoint = (point/wordNum+0.5) + "";
     return newPoint.replace(/\.[0-9]+/,"");
 }
 
-function extractNum ( div ) {
-    if(!div) return 0;
-    var point = div.get('text');
-    var m=point.match(/([0-9,]+)[^0-9]*$/);
-    return m.length>0 ? m[1].replace(/,/g,"") : 0;
+function extractNum ( n ) {
+    var m=n.match(/([0-9,]+)[^0-9]*$/);
+    return m.length>0 ? parseInt(m[1].replace(/,/g,"")) : 0;
 }
 
-function extractNumInt ( div ) {
-    var f = extractNum(div);
-    return parseInt(f);
-}
-
-function procSearchSummary(){
-    var result = new LjjSearch();
-    if(!result) return;
-    result.mainSearchSummary();
-}
-
-procSearchSummary();
+mainSearchSummary();
