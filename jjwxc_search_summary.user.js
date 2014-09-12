@@ -1,7 +1,7 @@
 // --------------------------------------------------------------------
 //
 // ==UserScript==
-// @name jjwxc-search-summary
+// @name jjwxc_search_summary
 // @namespace http://abbypan.github.com/
 // @description 绿晋江( http://www.jjwxc.net )搜索结果添加积分信息
 // @author Abby Pan (abbypan@gmail.com)
